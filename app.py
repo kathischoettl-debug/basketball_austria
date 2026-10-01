@@ -1,100 +1,126 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 # Seiten-Konfiguration
 st.set_page_config(
-    page_title="Interaktive System-Simulation",
-    page_icon="📊",
+    page_title="Basketball Club Benchmarking",
+    page_icon="🏀",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-st.title("📊 Interaktive System-Simulation")
-st.markdown("Passen Sie die Parameter in der Seitenleiste an, um das Verhalten des Systems dynamisch zu simulieren.")
+st.title("🏀 Basketball Club Benchmarking & Analyse Tool")
+st.markdown("Vergleiche verschiedene Basketballclubs basierend auf ihren Infrastruktur-, Matchday-, Marketing- und Sport-Kriterien.")
 
 # ---------------------------------------------------------
-# SEITENLEISTE: Steuerlemente & Regler
+# DATENSTRUCTURE & KRITERIEN (AUS DEM BILD)
 # ---------------------------------------------------------
-st.sidebar.header("⚙️ Simulationsparameter")
-
-# Regler (Slider)
-param_a = st.sidebar.slider(
-    "Startwert / Baseline (A)", 
-    min_value=1.0, max_value=100.0, value=50.0, step=1.0
-)
-
-param_b = st.sidebar.slider(
-    "Wachstumsfaktor (B)", 
-    min_value=0.01, max_value=0.50, value=0.10, step=0.01
-)
-
-noise_level = st.sidebar.slider(
-    "Schwankung / Rauschen", 
-    min_value=0.0, max_value=10.0, value=2.0, step=0.5
-)
-
-time_steps = st.sidebar.slider(
-    "Zeithorizont (Schritte)", 
-    min_value=10, max_value=200, value=100, step=10
-)
-
-# Auswahlfeld & Checkboxen
-model_type = st.sidebar.selectbox(
-    "Modelltyp wählen", 
-    ["Logistisch", "Exponentiell", "Linear"]
-)
-
-show_raw_data = st.sidebar.checkbox("Rohdaten-Tabelle anzeigen", value=False)
-
-# ---------------------------------------------------------
-# SIMULATION & BERECHNUNG
-# ---------------------------------------------------------
-t = np.arange(0, time_steps)
-
-if model_type == "Exponentiell":
-    y_ideal = param_a * np.exp(param_b * t / 10)
-elif model_type == "Logistisch":
-    y_ideal = param_a / (1 + np.exp(-param_b * (t - time_steps / 2)))
-else:
-    y_ideal = param_a + param_b * t * 10
-
-# Zufälliges Rauschen hinzufügen
-np.random.seed(42)
-noise = np.random.normal(0, noise_level, size=len(t))
-y_sim = np.maximum(0, y_ideal + noise)
-
-df = pd.DataFrame({
-    "Zeitschritt": t,
-    "Simulierter Wert": y_sim,
-    "Theoretischer Trend": y_ideal
-})
+kriterien_kategorien = {
+    "Spieltag & Ticketing": [
+        "An-/Abreise", "Ticketerwerb", "Ticketarten", "Ticketpreise", 
+        "Ticketkontrolle", "Security", "Platzzuweisung", "Platzwahl", 
+        "Kapazitäten", "Zeit Einlassbeginn"
+    ],
+    "Catering & Gastronomie": [
+        "Anzahl Verpflegungsstationen", "Spezielle Aktionen", "Essen Spezifisches Sortiment", 
+        "Buffet", "Essen serviert", "Wege zum Essen", "Bestellung Handy", 
+        "Essenspreise", "Getränkepreise", "Rabatt-Aktionen"
+    ],
+    "Event & Unterhaltung": [
+        "Art des Rahmenprogramms", "Ergebnisabhängige Rabattaktionen", 
+        "Ankündigung nächstes Heimspiel", "Rollen Stadionsprecher", 
+        "Stadionsprecher und DJ", "Anzeigetafel", "Spielerpräsentation"
+    ],
+    "Halle & Infrastruktur": [
+        "Hallenbau", "Feld", "Gestaltung Spielfeld", "Arten von Werbung", 
+        "Körbe", "Lichtqualität", "Beschaffung Lehne", "Sitzplätze Anordnung", 
+        "Courtside Seats", "Gesamtkapazität", "Anzahl Tribünen", "Erhöhung Tribünen", 
+        "Kampfgericht", "Position Hallensprecher", "Teamfoulanzeige", "Spielerbänke", 
+        "Verkleidung Hallenwände", "Parkplätze TV-Crew", "Verkabelung für TV", 
+        "Halle internationale Veranstaltungen"
+    ],
+    "Sport & Nachwuchs": [
+        "Lizenzstufen Trainer", "Art der Ausbildung - Trainer", "Trainingsstätte", 
+        "Trainingskapazitäten", "Anzahl Nachwuchsmannschaften", "Frauensparte", 
+        "Nachwuchsleistungszentrum", "Kooperationen mit Schulen", "Erfolg", "3x3"
+    ],
+    "Marketing, Digitales & Sponsoring": [
+        "Vereinsapp", "Zuschauer WLAN", "LED-Wall", "Arten von Merch", 
+        "Vertriebskanäle", "Give-Away", "Aktivierungsmöglichkeiten", 
+        "Anzahl Sponsoren", "Arten von Engagement", "Volumina", 
+        "Anzahl in Sponsoringkategorien", "Kanäle + Regelmäßigkeit", 
+        "Anzahl Follower", "Newsletter", "Werbung am Spieltag"
+    ],
+    "Nachhaltigkeit & Soziales": [
+        "Ökologische Nachhaltigkeit", "Inklusionssport", "Weitere gesellschaftliche Themen"
+    ]
+}
 
 # ---------------------------------------------------------
-# DASHBOARD DISPLAY
+# SEITENLEISTE: Steuerung & Clubauswahl
 # ---------------------------------------------------------
-# Kennzahlen anzeigen
-col1, col2, col3 = st.columns(3)
-col1.metric("Maximalwert", f"{y_sim.max():.2f}")
-col2.metric("Durchschnittswert", f"{y_sim.mean():.2f}")
-col3.metric("Endwert", f"{y_sim[-1]:.2f}")
+st.sidebar.header("⚙️ Benchmarking-Einstellungen")
+
+# Club-Auswahl
+clubs = ["Club A (z.B. FC Bayern)", "Club B (z.B. ALBA Berlin)", "Club C (z.B. Ratiopharm Ulm)"]
+selected_clubs = st.sidebar.multiselect("Clubs für Vergleich auswählen", clubs, default=clubs[:2])
+
+# Kategorie-Auswahl
+selected_kategorie = st.sidebar.selectbox("Fokus-Kategorie wählen", list(kriterien_kategorien.keys()))
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🎛️ Simulation / Bewertung anpassen")
+st.sidebar.markdown("Bewerte die Kriterien der gewählten Kategorie (1 = Mangelhaft, 10 = Exzellent):")
+
+# Dynamische Regler für die ausgewählte Kategorie
+kriterien_in_kat = kriterien_kategorien[selected_kategorie]
+scores_club_a = {}
+for krit in kriterien_in_kat[:5]:  # Beispielhaft die ersten 5 Kriterien als Regler
+    scores_club_a[krit] = st.sidebar.slider(f"{krit}", 1, 10, 7, key=krit)
+
+# ---------------------------------------------------------
+# HAUPTSEITE: Visualisierungen & Vergleich
+# ---------------------------------------------------------
+
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    st.subheader(f"📊 Benchmarking-Vergleich: {selected_kategorie}")
+    
+    # Dummy-Daten generieren für Demonstration
+    np.random.seed(42)
+    data = []
+    for club in selected_clubs:
+        for krit in kriterien_in_kat:
+            score = scores_club_a.get(krit, np.random.randint(4, 10)) if "Club A" in club else np.random.randint(3, 10)
+            data.append({"Club": club, "Kriterium": krit, "Score": score})
+    
+    df_scores = pd.DataFrame(data)
+    
+    # Balkendiagramm erzeugen
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for club in selected_clubs:
+        sub_df = df_scores[df_scores["Club"] == club]
+        ax.barh(sub_df["Kriterium"], sub_df["Score"], alpha=0.6, label=club)
+    
+    ax.set_xlabel("Bewertung / Performance (1-10)")
+    ax.set_xlim(0, 10)
+    ax.grid(True, linestyle=":", alpha=0.6)
+    ax.legend(loc="lower right")
+    plt.tight_layout()
+    st.pyplot(fig)
+
+with col2:
+    st.subheader("📋 Kriterien-Übersicht")
+    st.write(f"In der Kategorie **{selected_kategorie}** befinden sich insgesamt **{len(kriterien_in_kat)} Kriterien** aus deinem Katalog:")
+    for k in kriterien_in_kat:
+        st.markdown(f"- **{k}**")
 
 st.markdown("---")
 
-# Interaktives Diagramm zeichnen
-fig, ax = plt.subplots(figsize=(10, 4.5))
-ax.plot(t, y_sim, label="Simulierte Daten (mit Schwankung)", color="#1f77b4", alpha=0.8, linewidth=1.5)
-ax.plot(t, y_ideal, label="Theoretische Kurve", color="#ff7f0e", linestyle="--", linewidth=2)
-ax.set_xlabel("Zeit / Schritte")
-ax.set_ylabel("Wert")
-ax.set_title(f"Simulationsergebnis: {model_type}es Modell")
-ax.grid(True, linestyle=":", alpha=0.6)
-ax.legend()
-
-st.pyplot(fig)
-
-# Rohdaten anzeigen, falls gewünscht
-if show_raw_data:
-    st.subheader("📋 Datenübersicht")
-    st.dataframe(df, use_container_width=True)
+# Detaillierte Datentabelle
+if st.checkbox("🔍 Vollständige Benchmarking-Matrix als Tabelle anzeigen"):
+    pivoted_df = df_scores.pivot(index="Kriterium", columns="Club", values="Score")
+    st.dataframe(pivoted_df, use_container_width=True)
